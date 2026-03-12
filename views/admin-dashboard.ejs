@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admina</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-brand">⚙️ Panel Administratora</div>
+  <a href="/admin/logout" class="btn btn-ghost btn-sm">Wyloguj</a>
+</nav>
+<div class="container">
+
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <% if (success) { %><div class="alert alert-success">✅ Użytkownik utworzony! Skopiuj link i wyślij go użytkownikowi.</div><% } %>
+
+  <!-- Create user card -->
+  <div class="card">
+    <div class="card-header">
+      <h2>➕ Utwórz nowego użytkownika</h2>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/admin/users/create" class="create-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nazwa użytkownika *</label>
+            <input type="text" name="username" placeholder="np. jan_kowalski" required pattern="[a-zA-Z0-9_-]+" title="Tylko litery, cyfry, _ i -">
+          </div>
+          <div class="form-group">
+            <label>Imię i nazwisko *</label>
+            <input type="text" name="display_name" placeholder="Jan Kowalski" required>
+          </div>
+          <div class="form-group">
+            <label>Email (opcjonalnie)</label>
+            <input type="email" name="email" placeholder="jan@firma.pl">
+          </div>
+          <div class="form-group form-group-btn">
+            <button type="submit" class="btn btn-primary">Utwórz</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Users table -->
+  <div class="card">
+    <div class="card-header">
+      <h2>👥 Użytkownicy (<%= users.length %>)</h2>
+    </div>
+    <div class="card-body p0">
+      <% if (users.length === 0) { %>
+        <div class="empty-state">Brak użytkowników. Utwórz pierwszego powyżej.</div>
+      <% } else { %>
+      <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Użytkownik</th>
+            <th>Email</th>
+            <th>Folder OneDrive</th>
+            <th>Link dostępowy</th>
+            <th>Status</th>
+            <th>Akcje</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(user => { %>
+          <tr class="<%= !user.is_active ? 'row-disabled' : '' %>">
+            <td>
+              <strong><%= user.display_name %></strong><br>
+              <small class="text-muted">@<%= user.username %></small>
+            </td>
+            <td><%= user.email || '—' %></td>
+            <td><code><%= user.onedrive_folder %></code></td>
+            <td>
+              <div class="link-box">
+                <input type="text" readonly value="<%= baseUrl %>/portal/<%= user.token %>" class="link-input" onclick="this.select()">
+                <button class="btn btn-xs btn-ghost" onclick="copyLink('<%= baseUrl %>/portal/<%= user.token %>', this)">Kopiuj</button>
+              </div>
+            </td>
+            <td>
+              <span class="badge <%= user.is_active ? 'badge-active' : 'badge-inactive' %>">
+                <%= user.is_active ? 'Aktywny' : 'Nieaktywny' %>
+              </span>
+            </td>
+            <td>
+              <div class="action-btns">
+                <form method="POST" action="/admin/users/<%= user.id %>/toggle" style="display:inline">
+                  <button class="btn btn-xs <%= user.is_active ? 'btn-warning' : 'btn-success' %>">
+                    <%= user.is_active ? 'Dezaktywuj' : 'Aktywuj' %>
+                  </button>
+                </form>
+                <form method="POST" action="/admin/users/<%= user.id %>/regen-token" style="display:inline">
+                  <button class="btn btn-xs btn-ghost" onclick="return confirm('Regeneruj link? Stary przestanie działać.')">🔄 Link</button>
+                </form>
+                <form method="POST" action="/admin/users/<%= user.id %>/delete" style="display:inline">
+                  <button class="btn btn-xs btn-danger" onclick="return confirm('Usuń użytkownika <%= user.username %>?')">Usuń</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyLink(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '✅ Skopiowano';
+    setTimeout(() => btn.textContent = 'Kopiuj', 2000);
+  });
+}
+</script>
+</body></html>

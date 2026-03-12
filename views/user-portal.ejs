@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mój portal plików</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-brand">📁 Portal Plików</div>
+  <div class="nav-right">
+    <span class="nav-user">👤 <%= user.display_name %></span>
+    <a href="/logout" class="btn btn-ghost btn-sm">Wyloguj</a>
+  </div>
+</nav>
+<div class="container">
+
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <% if (success) { %><div class="alert alert-success">✅ <%= success %></div><% } %>
+
+  <!-- Upload area -->
+  <div class="card">
+    <div class="card-header">
+      <h2>⬆️ Wyślij pliki</h2>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/portal/upload" enctype="multipart/form-data" id="uploadForm">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-icon">📂</div>
+          <p>Przeciągnij pliki tutaj lub <label for="fileInput" class="link-label">kliknij aby wybrać</label></p>
+          <p class="text-muted small">Maksymalny rozmiar: 100MB na plik</p>
+          <input type="file" id="fileInput" name="files" multiple style="display:none">
+        </div>
+        <div id="fileList" class="file-preview"></div>
+        <div id="uploadProgress" style="display:none" class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          <span id="progressText">Wysyłanie...</span>
+        </div>
+        <button type="submit" class="btn btn-primary" id="uploadBtn" style="display:none">
+          ⬆️ Wyślij pliki
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Files list -->
+  <div class="card">
+    <div class="card-header">
+      <h2>📄 Moje pliki (<%= files.length %>)</h2>
+      <button class="btn btn-ghost btn-sm" onclick="location.reload()">🔄 Odśwież</button>
+    </div>
+    <div class="card-body p0">
+      <% if (files.length === 0) { %>
+        <div class="empty-state">
+          <div style="font-size:48px;margin-bottom:12px">📭</div>
+          <p>Brak plików. Wyślij pierwszy plik powyżej.</p>
+        </div>
+      <% } else { %>
+      <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Plik</th><th>Rozmiar</th><th>Data modyfikacji</th><th>Akcje</th></tr>
+        </thead>
+        <tbody>
+          <% files.forEach(file => { %>
+          <tr>
+            <td>
+              <span class="file-icon"><%= getFileIcon(file.name) %></span>
+              <%= file.name %>
+            </td>
+            <td><%= formatSize(file.size) %></td>
+            <td><%= new Date(file.lastModifiedDateTime).toLocaleString('pl-PL') %></td>
+            <td>
+              <a href="/portal/download/<%= file.id %>" class="btn btn-xs btn-primary">⬇️ Pobierz</a>
+              <form method="POST" action="/portal/delete/<%= file.id %>" style="display:inline">
+                <button class="btn btn-xs btn-danger" onclick="return confirm('Usunąć plik <%= file.name %>?')">🗑️</button>
+              </form>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<script>
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const icons = { pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', ppt: '📊', pptx: '📊',
+    jpg: '🖼️', jpeg: '🖼️', png: '🖼️', gif: '🖼️', mp4: '🎬', mp3: '🎵', zip: '📦', rar: '📦' };
+  return icons[ext] || '📎';
+}
+function formatSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(1) + ' MB';
+}
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const uploadBtn = document.getElementById('uploadBtn');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  fileInput.files = e.dataTransfer.files;
+  showFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => showFiles(fileInput.files));
+
+function showFiles(files) {
+  fileList.innerHTML = Array.from(files).map(f =>
+    `<div class="file-item">📎 ${f.name} <span class="text-muted">(${formatSize(f.size)})</span></div>`
+  ).join('');
+  uploadBtn.style.display = files.length ? 'block' : 'none';
+}
+
+document.getElementById('uploadForm').addEventListener('submit', () => {
+  document.getElementById('uploadProgress').style.display = 'block';
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Wysyłanie...';
+});
+</script>
+</body></html>

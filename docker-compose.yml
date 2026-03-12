@@ -1,0 +1,23 @@
+services:
+  onedrive-portal:
+    build: .
+    container_name: onedrive-portal
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - portal_data:/app/data   # persystentna baza danych SQLite
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/portal.db
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  portal_data:

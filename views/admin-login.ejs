@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Logowanie</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-page">
+<div class="auth-card">
+  <div class="auth-logo">⚙️</div>
+  <h1>Panel Administratora</h1>
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <form method="POST" action="/admin/login">
+    <div class="form-group">
+      <label>Nazwa użytkownika</label>
+      <input type="text" name="username" required autofocus>
+    </div>
+    <div class="form-group">
+      <label>Hasło</label>
+      <input type="password" name="password" required>
+    </div>
+    <button type="submit" class="btn btn-primary btn-full">Zaloguj się</button>
+  </form>
+</div>
+</body></html>
